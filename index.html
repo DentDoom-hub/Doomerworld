@@ -116,8 +116,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family
 (function(){
 const $=s=>document.querySelector(s);
 const KEY='doomerworld:v1';
-const SAT=['https://cdn.jsdelivr.net/npm/three-globe@2.27.2/example/img/earth-blue-marble.jpg','https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg'];
-const GEO='https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@v5.1.2/geojson/ne_50m_admin_0_countries.geojson';
+const SAT=['https://cdn.jsdelivr.net/npm/three-globe@2.27.2/example/img/earth-blue-marble.jpg','https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg','https://cdn.jsdelivr.net/gh/vasturiano/three-globe@master/example/img/earth-blue-marble.jpg'];
+const GEOS=['https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@v5.1.2/geojson/ne_50m_admin_0_countries.geojson','https://cdn.jsdelivr.net/gh/vasturiano/globe.gl@master/example/datasets/ne_110m_admin_0_countries.geojson','https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson'];
 const TINY='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const W=4096,H=2048;
 let features=[],visited=new Set(),customs=[],sat,canvas,ctx,tex,globe,map,flatLayer,custLayer,flatFeature,index=new Map(),started=false,hov=null;
@@ -358,21 +358,37 @@ $('#bImp').onclick=()=>{
 $('#reset').onclick=()=>{if(confirm('Vuoi azzerare tutta la mappa?')){visited.clear();customs=[];refresh()}};
 
 /* ---------- avvio ---------- */
+const tmo=(p,ms,l)=>new Promise((res,rej)=>{const x=setTimeout(()=>rej(new Error(l+': troppo lento')),ms);p.then(v=>{clearTimeout(x);res(v)},e=>{clearTimeout(x);rej(e)})});
 function loadImg(i){return new Promise((res,rej)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>res(im);
-  im.onerror=()=>i+1<SAT.length?loadImg(i+1).then(res,rej):rej();im.src=SAT[i]})}
+  im.onerror=()=>i+1<SAT.length?loadImg(i+1).then(res,rej):rej(new Error('immagine satellitare non raggiungibile'));im.src=SAT[i]})}
+async function loadGeo(){let last;
+  for(const u of GEOS){try{const r=await tmo(fetch(u),40000,'confini');if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await tmo(r.json(),40000,'confini');if(j&&j.features&&j.features.length)return j;throw new Error('dati vuoti')}catch(e){last=e}}
+  throw last||new Error('confini non raggiungibili')}
 async function start(){
   if(started)return;started=true;
   $('#app').hidden=false;$('#loading').hidden=false;
+  let step='librerie';
   try{
-    $('#loadMsg').textContent='Carico il mondo…';
-    const [im,gj]=await Promise.all([loadImg(0),fetch(GEO).then(r=>r.json())]);
-    sat=im;features=gj.features.filter(f=>f.properties.ADMIN&&f.geometry);
+    if(typeof Globe==='undefined')throw new Error('libreria del globo non caricata');
+    if(typeof L==='undefined')throw new Error('libreria della mappa non caricata');
+    step='immagine satellitare';$('#loadMsg').textContent='Carico le immagini satellitari…';
+    const im=await tmo(loadImg(0),60000,'immagine satellitare');
+    step='confini dei paesi';$('#loadMsg').textContent='Carico i confini dei paesi…';
+    const gj=await loadGeo();
+    step='preparazione';
+    sat=im;features=gj.features.filter(f=>f.properties&&f.properties.ADMIN&&f.geometry);
+    if(!features.length)throw new Error('nessun paese nei dati');
     buildIndex();
     canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;ctx=canvas.getContext('2d');
+    if(!ctx)throw new Error('canvas non disponibile');
+    step='globo 3D';$('#loadMsg').textContent='Costruisco il globo…';
+    await new Promise(r=>setTimeout(r,30));
     initGlobe();stats();
     setTimeout(()=>{$('#loading').hidden=true},500);
   }catch(e){
-    started=false;$('#loadMsg').innerHTML='Non riesco a caricare mappa e immagini satellitari.<br>Serve una connessione internet.<br><br><button class="btn p" onclick="location.reload()">Riprova</button>';
+    started=false;
+    $('#loadMsg').innerHTML='Qualcosa non va nel passo: <b>'+step+'</b><br><small style="opacity:.8">'+esc(e&&e.message||e)+'</small><br><br><button class="btn p" onclick="location.reload()">Riprova</button>';
   }
 }
 $('#explore').onclick=()=>{$('#splash').classList.add('out');setTimeout(()=>$('#splash').hidden=true,500);start()};
