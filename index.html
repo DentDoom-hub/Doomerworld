@@ -192,7 +192,7 @@ function initGlobe(){
   globe=Globe()($('#globe'))
     .backgroundColor('#070b16').atmosphereColor('#7aa7ff').atmosphereAltitude(.18)
     .globeImageUrl(TINY)
-    .polygonsData(features).polygonsMerge(false)
+    .polygonsData(features)
     .polygonSideColor(()=>'rgba(0,0,0,0)').polygonStrokeColor(()=>'rgba(255,255,255,.2)')
     .polygonLabel(d=>`<div class="tip">${itName(d)}${visited.has(d.properties.ADMIN)?' ✓':''}</div>`)
     .onPolygonHover(d=>{hov=d;polyStyle();$('#globe').style.cursor=d?'pointer':'grab'})
