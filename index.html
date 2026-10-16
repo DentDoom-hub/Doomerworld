@@ -139,7 +139,7 @@ function mainBounds(g){let best=null,ba=-1;
 function flyTo(g,maxZoom){const b=mainBounds(g);if(b)map.fitBounds(b,{padding:60,maxZoom:maxZoom||12,duration:1400})}
 
 /* ---------- livelli e layer ---------- */
-const LV=[[3.5,'Nazione',3],[5.5,'Regione',5],[8,'Provincia',8],[12,'Comune',10],[15,'Zona',14],[99,'Luogo',18]];
+const LV=[[3.5,'Nazione',3],[5.5,'Regione',5],[8,'Provincia',8],[99,'Comune',10]];
 const lvFor=z=>LV.find(l=>z<l[0]);
 function updateLayers(){
   if(!ready)return;
@@ -210,8 +210,7 @@ function makeStyle(){
       bnd('b2',2,0,1.6,.85),bnd('b4',4,3,1.1,.65,[3,2]),bnd('b6',6,5.5,1,.6,[3,2]),bnd('b8',8,8,.9,.6,[2,2]),
       {id:'vis-line',type:'line',source:'vis',paint:{'line-color':'#ffd600','line-width':2.2}},
       lab('l-country','country',1,6,13,true),lab('l-state','state',4,8,12,true),
-      lab('l-city','city',3,13,13,true),lab('l-town','town',7,14,12,false),
-      lab('l-village',['village','suburb','hamlet','quarter','neighbourhood'],10,22,11,false)
+      lab('l-city','city',3,22,13,true),lab('l-town','town',7,22,12,false)
     ]};
 }
 function initMap(){
@@ -229,7 +228,7 @@ function initMap(){
 
 /* ---------- controlli ---------- */
 $('#zi').onclick=()=>map&&map.zoomIn();$('#zo').onclick=()=>map&&map.zoomOut();
-$('#bLvl').onclick=()=>toast('Il tipo di area cambia con lo zoom: più vicino = più preciso');
+$('#bLvl').onclick=()=>toast('Il livello cambia con lo zoom: da vicino tocchi sempre il comune');
 function modal(html){const m=$('#modal');m.innerHTML=html;m.hidden=false;m.onclick=e=>{if(e.target===m)closeModal()};return m}
 function closeModal(){$('#modal').hidden=true;$('#modal').innerHTML=''}
 
