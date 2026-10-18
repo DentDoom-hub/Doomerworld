@@ -459,6 +459,22 @@ async function handleClick(lat,lng){
     const c0=countryAt(lat,lng);
     customs.push({id:'a:'+Date.now().toString(36),name:'Area'+(c0?' · '+itName(c0):''),geometry:g});
     refresh();toast('Area aggiunta ✓'+hint());return}
+  if(lv[0]==='Luogo'){
+    // se tocchi una cima con il nome: area di circa 3 km attorno alla vetta
+    try{
+      const p=map.project([lng,lat]);
+      const fs=map.queryRenderedFeatures([[p.x-26,p.y-26],[p.x+26,p.y+26]],{layers:['d-peak-a','d-peak-b','l-peak-a','l-peak-b']});
+      if(fs.length){
+        let best=null,bd=1e9;
+        for(const f of fs){const c=f.geometry&&f.geometry.coordinates;if(!c||typeof c[0]!=='number')continue;const q=map.project(c),d=Math.hypot(q.x-p.x,q.y-p.y);if(d<bd){bd=d;best=f}}
+        if(best){
+          const c=best.geometry.coordinates,pr=best.properties||{},name=pr['name:it']||pr.name||'Cima';
+          const id='pk:'+name+':'+c[0].toFixed(3)+','+c[1].toFixed(3);
+          if(customs.some(x=>x.id===id)){toast(name+' è già attiva\nTieni premuto per le opzioni');return}
+          customs.push({id,name,geometry:circle(c[0],c[1],.03)});refresh();toast(name+' aggiunto ✓'+hint());return}
+      }
+    }catch(e){}
+  }
   busy=true;toast('Cerco il luogo…');
   try{
     const extra=lv[0]==='Luogo'?'&layer=poi,natural':'';
@@ -540,6 +556,7 @@ function makeStyle(){
     layout:Object.assign({'text-field':nm,'text-font':[font],'text-size':zi(...sizes),'text-max-width':7,'text-padding':3,'symbol-sort-key':['get','rank']},extra||{}),
     paint:Object.assign({},halo,paint||{})});
   const pt={'text-anchor':'left','text-offset':[.7,0],'text-justify':'left'};
+  const peakTxt=['case',['has','ele'],['concat',nm,'\n',['to-string',['get','ele']],' m'],nm];
   return{version:8,projection:{type:'globe'},
     glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
     sources:{
@@ -560,7 +577,28 @@ function makeStyle(){
       lab('l-country','country',1,7,[1,9.5,4,12,7,16],'Noto Sans Bold',{'text-transform':'uppercase','text-letter-spacing':.14},{'text-color':'rgba(255,255,255,.96)'}),
       lab('l-state','state',4,9,[4,10,8,13],'Noto Sans Italic',{'text-transform':'uppercase','text-letter-spacing':.1},{'text-color':'#e9d5ff'}),
       lab('l-city','city',3,22,[3,11,8,14,12,17],'Noto Sans Regular',pt),
-      lab('l-town','town',7,22,[7,10.5,12,14],'Noto Sans Regular',pt,{'text-color':'#f1e8ff'})
+      lab('l-town','town',7,22,[7,10.5,12,14],'Noto Sans Regular',pt,{'text-color':'#f1e8ff'}),
+      {id:'d-peak-a',type:'circle',source:'omt','source-layer':'mountain_peak',minzoom:8,maxzoom:11,filter:['all',['has','name'],['<=',['get','rank'],3]],
+        paint:{'circle-radius':zi(8,3,11,4.5),'circle-color':'#ffd600','circle-stroke-color':'#12042e','circle-stroke-width':1.3}},
+      {id:'d-peak-b',type:'circle',source:'omt','source-layer':'mountain_peak',minzoom:11,filter:['has','name'],
+        paint:{'circle-radius':zi(11,4.5,16,7),'circle-color':'#ffd600','circle-stroke-color':'#12042e','circle-stroke-width':1.3}},
+      {id:'l-peak-a',type:'symbol',source:'omt','source-layer':'mountain_peak',minzoom:8,maxzoom:11,filter:['all',['has','name'],['<=',['get','rank'],3]],
+        layout:{'text-field':peakTxt,'text-font':['Noto Sans Regular'],'text-size':zi(8,10,11,12),'text-anchor':'top','text-offset':[0,.7],'text-max-width':7,'text-padding':4,'symbol-sort-key':['get','rank']},
+        paint:Object.assign({},halo,{'text-color':'#fff2b3'})},
+      {id:'l-peak-b',type:'symbol',source:'omt','source-layer':'mountain_peak',minzoom:11,filter:['has','name'],
+        layout:{'text-field':peakTxt,'text-font':['Noto Sans Regular'],'text-size':zi(11,12,16,14),'text-anchor':'top','text-offset':[0,.8],'text-max-width':7,'text-padding':4,'symbol-sort-key':['get','rank']},
+        paint:Object.assign({},halo,{'text-color':'#fff2b3'})},
+      {id:'l-park-a',type:'symbol',source:'omt','source-layer':'park',minzoom:8,maxzoom:12,
+        filter:['all',['has','name'],['in',['get','class'],['literal',['national_park','nature_reserve']]]],
+        layout:{'text-field':nm,'text-font':['Noto Sans Italic'],'text-size':zi(8,10,12,13),'text-max-width':6,'text-padding':4,'symbol-sort-key':['get','rank']},
+        paint:Object.assign({},halo,{'text-color':'#c8ffd8'})},
+      {id:'l-park-b',type:'symbol',source:'omt','source-layer':'park',minzoom:12,filter:['has','name'],
+        layout:{'text-field':nm,'text-font':['Noto Sans Italic'],'text-size':zi(12,12,16,14),'text-max-width':6,'text-padding':4,'symbol-sort-key':['get','rank']},
+        paint:Object.assign({},halo,{'text-color':'#c8ffd8'})},
+      {id:'l-water',type:'symbol',source:'omt','source-layer':'water_name',minzoom:3,filter:['has','name'],
+        layout:{'text-field':nm,'text-font':['Noto Sans Italic'],'text-size':zi(3,10,10,13,14,15),'text-max-width':6,'text-letter-spacing':.08,'text-padding':4},
+        paint:Object.assign({},halo,{'text-color':'#bfe9ff'})},
+      lab('l-island','island',6,22,[6,10,12,13],'Noto Sans Italic',{},{'text-color':'#f1e8ff'})
     ]};
 }
 function initMap(){
