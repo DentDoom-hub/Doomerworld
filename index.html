@@ -157,6 +157,16 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family
 .cgrid button.w{background:#ffd600;color:#12042e}
 #toast{background:#12042e;color:#ffd600;border-radius:0;border-left:4px solid #ffd600;box-shadow:4px 4px 0 #07010f;font:700 12px 'Space Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
 #loading{background:#12042e;font-family:'Space Mono',monospace;letter-spacing:.06em}
+#map{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+#modal.fresh{pointer-events:none}
+#toast{white-space:pre-line;line-height:1.5}
+.pimg{display:block;width:100%;max-height:46vh;object-fit:contain;background:#07010f;margin:2px 0 14px}
+.nophoto{background:#1c0847;color:#c9b0ff;font:400 12px 'Space Mono',monospace;letter-spacing:.08em;text-transform:uppercase;text-align:center;padding:26px 10px;margin:2px 0 14px}
+.pm{display:flex;flex-direction:column;gap:12px;padding-bottom:6px}
+.pbtn{display:flex;align-items:center;justify-content:center;gap:10px;border:0;cursor:pointer;background:#2a0a5e;color:#e9d5ff;padding:15px 18px;
+  font:400 13px/1 'Archivo Black',Impact,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
+.pbtn.y{background:#ffd600;color:#12042e}
 </style>
 </head>
 <body>
@@ -258,6 +268,24 @@ const GEOS=['https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@v5.1.2/geo
 const EMPTY={type:'FeatureCollection',features:[]};
 let features=[],visited=new Set(),customs=[],index=new Map(),map,started=false,busy=false,ready=false;
 const BB=new WeakMap();
+const photoKeys=new Set();
+const photoStore=(()=>{let db=null,mem=new Map(),ok=false;
+  const open=()=>new Promise(res=>{try{const r=indexedDB.open('doomerworld-photos',1);r.onupgradeneeded=()=>r.result.createObjectStore('p');
+    r.onsuccess=()=>{db=r.result;ok=true;res()};r.onerror=()=>res();r.onblocked=()=>res()}catch(e){res()}});
+  const rq=(mode,fn)=>new Promise((res,rej)=>{try{const s=db.transaction('p',mode).objectStore('p');const q=fn(s);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}catch(e){rej(e)}});
+  return{ready:open(),persistent:()=>ok,
+    get:k=>ok?rq('readonly',s=>s.get(k)):Promise.resolve(mem.get(k)||null),
+    set:(k,v)=>ok?rq('readwrite',s=>s.put(v,k)):(mem.set(k,v),Promise.resolve()),
+    del:k=>ok?rq('readwrite',s=>s.delete(k)):(mem.delete(k),Promise.resolve()),
+    keys:()=>ok?rq('readonly',s=>s.getAllKeys()):Promise.resolve([...mem.keys()]),
+    clear:()=>ok?rq('readwrite',s=>s.clear()):(mem.clear(),Promise.resolve())};
+})();
+const keyOfCustom=c=>c.id||('n:'+c.name);
+function fileToDataURL(file,max){max=max||1280;return new Promise((res,rej)=>{
+  const url=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.max(1,Math.round(im.naturalWidth*k)),h=Math.max(1,Math.round(im.naturalHeight*k));
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',.82))};
+  im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('immagine non leggibile'))};im.src=url})}
 
 /* ---------- stato ---------- */
 try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){visited=new Set(s.visited||[]);customs=s.customs||[];}}catch(e){}
@@ -311,6 +339,10 @@ function updateLayers(){
   const holes=[];incl.forEach(g=>polysOf(g).forEach(p=>holes.push(p[0])));
   const outer=[[-180,-90],[180,-90],[180,90],[-180,90],[-180,-90]];
   map.getSource('fog').setData({type:'Feature',geometry:{type:'Polygon',coordinates:[outer,...holes]}});
+  const pp=[];
+  customs.forEach(c=>{if(photoKeys.has(keyOfCustom(c))){const b=bboxOf(c.geometry);pp.push({type:'Feature',geometry:{type:'Point',coordinates:[(b[0]+b[2])/2,(b[1]+b[3])/2]}})}});
+  features.forEach(f=>{if(visited.has(f.properties.ADMIN)&&photoKeys.has('country:'+f.properties.ADMIN)){const b=mainBounds(f.geometry);pp.push({type:'Feature',geometry:{type:'Point',coordinates:[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2]}})}});
+  map.getSource('photos').setData({type:'FeatureCollection',features:pp});
   map.getSource('vis').setData({type:'FeatureCollection',features:[...vf.map(f=>({type:'Feature',geometry:f.geometry})),...customs.map(c=>({type:'Feature',geometry:c.geometry}))]});
 }
 function stats(){
@@ -324,12 +356,14 @@ function stats(){
 function refresh(){save();updateLayers();stats()}
 
 /* ---------- tocco sulla mappa ---------- */
+const hint=()=>(customs.length+visited.size<=3?'\nTieni premuto per foto e opzioni':'');
 async function handleClick(lat,lng){
   if(!ready||busy)return;
   const lv=lvFor(map.getZoom());
   if(lv[2]===3){const f=countryAt(lat,lng);if(!f){toast('Nessuna nazione qui');return}
-    const k=f.properties.ADMIN;if(visited.has(k)){visited.delete(k);toast(itName(f)+' rimosso')}else{visited.add(k);toast(itName(f)+' aggiunto ✓')}
-    refresh();return}
+    const k=f.properties.ADMIN;
+    if(visited.has(k)){toast(itName(f)+' è già attiva\nTieni premuto per le opzioni');return}
+    visited.add(k);refresh();toast(itName(f)+' aggiunto ✓'+hint());return}
   busy=true;toast('Cerco il luogo…');
   try{
     const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=${lv[2]}&polygon_geojson=1&polygon_threshold=0.0005&accept-language=it&lat=${lat}&lon=${lng}`);
@@ -339,10 +373,50 @@ async function handleClick(lat,lng){
     const id=(j.osm_type||'x')+(j.osm_id||j.place_id);
     const name=j.name||(j.display_name||'').split(',')[0]||'Luogo';
     const i=customs.findIndex(c=>c.id===id);
-    if(i>=0){customs.splice(i,1);toast(name+' rimosso')}else{customs.push({id,name,geometry:g});toast(name+' aggiunto ✓')}
-    refresh();
+    if(i>=0){toast(name+' è già attivo\nTieni premuto per le opzioni');return}
+    customs.push({id,name,geometry:g});refresh();toast(name+' aggiunto ✓'+hint());
   }catch(e){toast('Non riesco a contattare il servizio mappe')}
   finally{setTimeout(()=>{busy=false},900)}
+}
+
+/* ---------- tieni premuto: foto e opzioni ---------- */
+function areaAt(lat,lng){
+  let best=null,ba=1e9;
+  for(const c of customs){if(inGeom(c.geometry,lat,lng)){const b=bboxOf(c.geometry),a=(b[2]-b[0])*(b[3]-b[1]);if(a<ba){ba=a;best={kind:'c',key:keyOfCustom(c),name:c.name,ref:c}}}}
+  if(best)return best;
+  for(const f of features)if(visited.has(f.properties.ADMIN)&&inGeom(f.geometry,lat,lng))return{kind:'k',key:'country:'+f.properties.ADMIN,name:itName(f),ref:f};
+  return null;
+}
+function longPress(lat,lng){
+  const a=areaAt(lat,lng);
+  if(!a){toast('Qui non c\'è un\'area attiva\nToccala una volta per attivarla');return}
+  openPlaceMenu(a);
+}
+async function openPlaceMenu(a){
+  let img='';
+  if(photoKeys.has(a.key)){try{const d=await photoStore.get(a.key);if(d)img=`<img class="pimg" src="${d}" alt="">`}catch(e){}}
+  const clip='<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M16.5 6v11.5a4 4 0 01-8 0V5a2.5 2.5 0 015 0v10.5a1 1 0 01-2 0V6H10v9.5a2.5 2.5 0 005 0V5a4 4 0 00-8 0v12.5a5.5 5.5 0 0011 0V6z"/></svg>';
+  const m=modal(`<div class="box"><h2>${esc(a.name)}</h2><div class="sub">Area attiva${img?' · foto allegata':''}</div>
+    <div class="body">${img||'<div class="nophoto">Nessuna foto allegata</div>'}
+      <div class="pm">${img?'<button class="pbtn" id="pDel">Elimina foto</button>':`<button class="pbtn y" id="pAdd">${clip}<span>Allega foto</span></button>`}
+      <button class="pbtn" id="pOff">Disattiva ${esc(a.name)}</button></div></div>
+    <div class="foot"><button class="btn" id="x">Chiudi</button></div></div>`);
+  m.querySelector('#x').onclick=closeModal;
+  const add=m.querySelector('#pAdd');
+  if(add)add.onclick=()=>{
+    const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.style.display='none';document.body.appendChild(inp);
+    inp.onchange=async()=>{const f=inp.files&&inp.files[0];inp.remove();if(!f)return;
+      try{toast('Salvo la foto…');const d=await fileToDataURL(f);await photoStore.set(a.key,d);photoKeys.add(a.key);updateLayers();
+        toast(photoStore.persistent()?'Foto allegata ✓':'Foto allegata\nin questa modalità non resta salvata');openPlaceMenu(a)}
+      catch(e){toast('Non riesco a salvare la foto')}};
+    inp.click();
+  };
+  const del=m.querySelector('#pDel');
+  if(del)del.onclick=async()=>{try{await photoStore.del(a.key)}catch(e){}photoKeys.delete(a.key);updateLayers();toast('Foto eliminata');openPlaceMenu(a)};
+  m.querySelector('#pOff').onclick=()=>{
+    if(a.kind==='c'){const i=customs.indexOf(a.ref);if(i>=0)customs.splice(i,1)}else visited.delete(a.ref.properties.ADMIN);
+    refresh();closeModal();toast(a.name+' disattivato');
+  };
 }
 
 /* ---------- stile mappa ---------- */
@@ -370,7 +444,7 @@ function makeStyle(){
       sat:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:17},
       eox:{type:'raster',tiles:['https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/g/{z}/{y}/{x}.jpg'],tileSize:256,maxzoom:13},
       omt:{type:'vector',url:'https://tiles.openfreemap.org/planet'},
-      fog:{type:'geojson',data:EMPTY},vis:{type:'geojson',data:EMPTY}},
+      fog:{type:'geojson',data:EMPTY},vis:{type:'geojson',data:EMPTY},photos:{type:'geojson',data:EMPTY}},
     layers:[
       {id:'bg',type:'background',paint:{'background-color':'#120a30'}},
       {id:'sat',type:'raster',source:'sat',paint:{'raster-saturation':.12}},
@@ -380,6 +454,7 @@ function makeStyle(){
       ...bnd('b2',2,0,1.5,.9),...bnd('b4',4,3,1,.7,[3,2]),...bnd('b6',6,5.5,.9,.65,[3,2]),...bnd('b8',8,8,.8,.65,[2,2]),
       {id:'vis-glow',type:'line',source:'vis',layout:{'line-join':'round'},paint:{'line-color':'#ffd600','line-width':9,'line-opacity':.28,'line-blur':5}},
       {id:'vis-line',type:'line',source:'vis',layout:{'line-join':'round'},paint:{'line-color':'#ffd600','line-width':2.2}},
+      {id:'photo-dot',type:'circle',source:'photos',minzoom:3,paint:{'circle-radius':zi(3,4,8,6,14,9),'circle-color':'#ffffff','circle-stroke-color':'#ffd600','circle-stroke-width':3}},
       dot('d-city','city',3,3.2,'#ffffff'),dot('d-town','town',7,2.4,'#e9d5ff'),
       lab('l-country','country',1,7,[1,9.5,4,12,7,16],'Noto Sans Bold',{'text-transform':'uppercase','text-letter-spacing':.14},{'text-color':'rgba(255,255,255,.96)'}),
       lab('l-state','state',4,9,[4,10,8,13],'Noto Sans Italic',{'text-transform':'uppercase','text-letter-spacing':.1},{'text-color':'#e9d5ff'}),
@@ -395,7 +470,18 @@ function initMap(){
   map.on('load',()=>{ready=true;try{map.setProjection({type:'globe'})}catch(e){}
     try{map.setSky({'sky-color':'#1b1060','horizon-color':'#8b5cf6','fog-color':'#2a0a5e','sky-horizon-blend':.6,'horizon-fog-blend':.6,'fog-ground-blend':.3,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,5,1,7,0]})}catch(e){}
     updateLayers();stats();$('#loading').hidden=true;toast('Zooma: appaiono confini e nomi. Tocca per colorare')});
-  map.on('click',e=>handleClick(e.lngLat.lat,e.lngLat.lng));
+  let lpT=null,lpP=null,lpFired=false,noClickUntil=0;
+  const lpBegin=e=>{if(!ready)return;const oe=e.originalEvent;if(oe&&oe.touches&&oe.touches.length>1)return;
+    lpFired=false;lpP=e.point;clearTimeout(lpT);
+    lpT=setTimeout(()=>{lpFired=true;if(navigator.vibrate)try{navigator.vibrate(18)}catch(x){}longPress(e.lngLat.lat,e.lngLat.lng)},600)};
+  const lpEnd=()=>{clearTimeout(lpT);if(lpFired)noClickUntil=performance.now()+600};
+  const lpMove=e=>{if(lpP&&e.point&&e.point.dist(lpP)>10)clearTimeout(lpT)};
+  ['touchstart','mousedown'].forEach(n=>map.on(n,lpBegin));
+  ['touchend','touchcancel','mouseup'].forEach(n=>map.on(n,lpEnd));
+  ['touchmove','mousemove'].forEach(n=>map.on(n,lpMove));
+  ['movestart','zoomstart','rotatestart','pitchstart'].forEach(n=>map.on(n,()=>clearTimeout(lpT)));
+  map.getCanvas().addEventListener('contextmenu',e=>e.preventDefault());
+  map.on('click',e=>{if(lpFired||performance.now()<noClickUntil){lpFired=false;return}handleClick(e.lngLat.lat,e.lngLat.lng)});
   map.on('zoom',()=>{$('#bLvlT').textContent=lvFor(map.getZoom())[1]});
   setTimeout(()=>{if(!ready){started=false;$('#loadMsg').innerHTML='La mappa non si carica.<br><small style="opacity:.8">'+esc(lastErr||'connessione lenta o servizio non raggiungibile')+'</small><br><br><button class="btn p" onclick="location.reload()">Riprova</button>'}},30000);
 }
@@ -423,7 +509,7 @@ $('#bWorld').onclick=goWorld;
 /* ---------- controlli ---------- */
 $('#zi').onclick=()=>map&&map.zoomIn();$('#zo').onclick=()=>map&&map.zoomOut();
 $('#bLvl').onclick=()=>toast('Il livello cambia con lo zoom: da vicino tocchi sempre il comune');
-function modal(html){const m=$('#modal');m.innerHTML=html;m.hidden=false;m.onclick=e=>{if(e.target===m)closeModal()};return m}
+function modal(html){const m=$('#modal');m.innerHTML=html;m.hidden=false;m.classList.add('fresh');setTimeout(()=>m.classList.remove('fresh'),550);m.onclick=e=>{if(e.target===m)closeModal()};return m}
 function closeModal(){$('#modal').hidden=true;$('#modal').innerHTML=''}
 
 $('#bNation').onclick=()=>{
@@ -473,7 +559,7 @@ $('#bAdd').onclick=()=>{
     else{closeModal();toast('Aggiunti: '+added.join(', '));if(last&&added.length===1){lastCountry?goRegion(mainBounds(last)):flyTo(last,11)}}
   };
 };
-$('#reset').onclick=()=>{if(confirm('Vuoi azzerare tutta la mappa?')){visited.clear();customs=[];refresh()}};
+$('#reset').onclick=()=>{if(confirm('Vuoi azzerare tutta la mappa (foto comprese)?')){visited.clear();customs=[];photoKeys.clear();photoStore.clear().catch(()=>{});refresh()}};
 
 /* ---------- avvio ---------- */
 const tmo=(p,ms,l)=>new Promise((res,rej)=>{const x=setTimeout(()=>rej(new Error(l+': troppo lento')),ms);p.then(v=>{clearTimeout(x);res(v)},e=>{clearTimeout(x);rej(e)})});
@@ -492,6 +578,7 @@ async function start(){
     features=gj.features.filter(f=>f.properties&&f.properties.ADMIN&&f.geometry);
     if(!features.length)throw new Error('nessun paese nei dati');
     buildIndex();
+    photoStore.ready.then(()=>photoStore.keys()).then(ks=>{(ks||[]).forEach(k=>photoKeys.add(k));if(ready)updateLayers()}).catch(()=>{});
     step='mappa';$('#loadMsg').textContent='Costruisco la mappa…';
     initMap();
   }catch(e){
