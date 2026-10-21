@@ -1252,6 +1252,16 @@ function nudgeBar(){
 }
 document.querySelector('.bar .scroll').addEventListener('scroll',barFade,{passive:true});
 addEventListener('resize',barFade);
+let barTouched=0;
+document.querySelector('.bar .scroll').addEventListener('touchstart',()=>{barTouched=Date.now()},{passive:true});
+// ogni minuto ripete il piccolo movimento, se la barra è visibile e nessuno la sta usando
+setInterval(()=>{
+  const el=document.querySelector('.bar .scroll');
+  if(!el||!ready||document.hidden)return;
+  if(document.body.classList.contains('clean')||!$('#splash').hidden||!$('#modal').hidden||!document.getElementById('stats').hidden)return;
+  if(el.scrollLeft>2||Date.now()-barTouched<8000)return;
+  nudgeBar();
+},60000);
 
 /* ---------- backup e ripristino ---------- */
 async function collectPhotos(){const out={};let ks=[];try{ks=await photoStore.keys()}catch(e){}
