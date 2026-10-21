@@ -284,6 +284,21 @@ body.clean .bar,body.clean #stat{display:none}
 .brk-row u{display:block;height:100%;background:#ffd600}
 .brk-row b{text-align:right;color:#ffd600;font-weight:700}
 .st-attr{margin-top:auto}
+.bar .scroll.fade{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 44px),transparent 100%);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 44px),transparent 100%)}
+.lvrow.c{padding:8px 14px;margin-bottom:6px;gap:12px;align-items:center}
+.lvrow.c b{font-size:13px}
+.lvrow.c .n{width:20px}
+.goal{display:grid;grid-template-columns:96px 1fr 62px;gap:10px;align-items:center;margin:9px 0;font:400 11px 'Space Mono',monospace;text-transform:uppercase;letter-spacing:.05em;color:#e9d5ff}
+.goal i{display:block;height:8px;background:#2a0a5e}
+.goal u{display:block;height:100%;background:#ffd600}
+.goal b{text-align:right;color:#ffd600;font-weight:700}
+.goal.ok u{background:#7cffb2}
+.goal.ok b{color:#7cffb2}
+.hlp p.small{font-size:10.5px;color:#c9b0ff}
+.rtab{width:100%;border-collapse:collapse;font:400 11px 'Space Mono',monospace;text-align:center}
+.rtab th{color:#c9b0ff;font-weight:400;padding:5px 2px;text-transform:uppercase;font-size:9.5px;letter-spacing:.05em}
+.rtab td{padding:6px 2px;border-top:1px solid #2a0a5e}
+.rtab tr.on td{background:#ffd600;color:#12042e;font-weight:700}
 </style>
 </head>
 <body>
@@ -336,6 +351,7 @@ body.clean .bar,body.clean #stat{display:none}
     <span class="cw" id="bWorld" hidden><button class="chip"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 17.9A8 8 0 014 12c0-.6.1-1.2.2-1.8L9 15v1c0 1.1.9 2 2 2v1.9zm6.9-2.5A2 2 0 0016 16h-1v-3c0-.6-.4-1-1-1H8v-2h2c.6 0 1-.4 1-1V7h2c1.1 0 2-.9 2-2v-.4A8 8 0 0120 12c0 2-.7 3.9-2.1 5.4z"/></svg><span>Mondo</span></button></span>
     <span class="cw"><button class="chip" id="bNation"><svg viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg><span>Esplora</span></button></span>
     <span class="cw"><button class="chip" id="bAdd"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 00-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 00-7-7zm4 8h-3v3h-2v-3H8V8h3V5h2v3h3z"/></svg><span>Aggiungi</span></button></span>
+    <span class="cw"><button class="chip" id="bBackup"><svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4zm-5 16a3 3 0 110-6 3 3 0 010 6zm3-10H5V5h10v4z"/></svg><span>Backup</span></button></span>
     <span class="cw"><button class="chip" id="bHelp"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg><span>Istruzioni</span></button></span>
   </div></div>
   <span class="cw" id="eyew"><button class="chip sq" id="eye" aria-label="Nascondi il menu"><svg viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg></button></span>
@@ -464,7 +480,7 @@ function fileToDataURL(file,max){max=max||1280;return new Promise((res,rej)=>{
 
 /* ---------- stato ---------- */
 try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){visited=new Set(s.visited||[]);customs=s.customs||[];}}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({visited:[...visited],customs:customs.map(c=>({id:c.id,name:c.name,geometry:c.geometry}))}))}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({visited:[...visited],customs:customs.map(c=>({id:c.id,name:c.name,kind:c.kind,geometry:c.geometry}))}))}catch(e){}};
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),3000)}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -528,13 +544,215 @@ function updateLayers(){
   map.getSource('fog').setData({type:'Feature',geometry:{type:'Polygon',coordinates:[outer,...fogRings()]}});
   map.getSource('vis').setData({type:'FeatureCollection',features:[...vf.map(f=>({type:'Feature',geometry:f.geometry})),...customs.map(c=>({type:'Feature',geometry:c.geometry}))]});
 }
-/* ---------- livelli e statistiche ---------- */
-const LEVELS=[
-  {n:'Sedentario',s:0,r:'0 – 1.5%'},{n:'Strisciapiedi',s:1.6,r:'1.6 – 2.5%'},{n:'Esploratore base',s:2.6,r:'2.6 – 8.5%'},
-  {n:'Trasfertista esperto',s:8.6,r:'8.6 – 25%'},{n:'Commerciante di spezie',s:26,r:'26 – 55%'},{n:'Esploratore attrezzato',s:56,r:'56 – 80%'},
-  {n:'Satellite',s:81,r:'81 – 99.9%'},{n:'Platinatore',s:100,r:'100%'}];
-function levelIdx(p,full){if(full)return 7;const pr=Math.round(p*10)/10;let k=0;for(let i=0;i<7;i++)if(pr>=LEVELS[i].s)k=i;return k}
-function fmtP(p){if(p<=0)return '0%';if(p<0.1)return '<0.1%';return (p>=99.95&&p<100?'99.9':p.toFixed(1))+'%'}
+/* ---------- livelli a obiettivi e statistiche ---------- */
+const LEVEL_NAMES=['Sedentario','Strisciapiedi','Esploratore base','Trasfertista esperto','Commerciante di spezie','Esploratore attrezzato','Cartografo','Platinatore'];
+const CATS=[['cont','Continenti'],['naz','Nazioni'],['cap','Capitali'],['cit','Città'],['nat','Natura']];
+const REQ=[[0,0,0,0,0],[1,2,2,6,4],[2,5,4,21,9],[3,16,11,41,21],[4,26,21,61,41],[5,41,36,101,61],[5,81,51,201,101],[5,195,195,1000,251]];
+const CAPS=`Kabul;34.53;69.17
+Tirana;41.33;19.82
+Algeri,Algiers;36.75;3.06
+Andorra la Vella;42.51;1.52
+Luanda;-8.84;13.23
+Saint John's,St John's;17.12;-61.85
+Buenos Aires;-34.60;-58.38
+Erevan,Yerevan;40.18;44.51
+Canberra;-35.28;149.13
+Vienna,Wien;48.21;16.37
+Baku;40.41;49.87
+Nassau;25.05;-77.35
+Manama;26.23;50.59
+Dacca,Dhaka;23.81;90.41
+Bridgetown;13.10;-59.61
+Minsk;53.90;27.57
+Bruxelles,Brussels;50.85;4.35
+Belmopan;17.25;-88.77
+Porto-Novo;6.50;2.63
+Thimphu;27.47;89.64
+La Paz,Sucre;-16.50;-68.15
+Sarajevo;43.86;18.41
+Gaborone;-24.65;25.91
+Brasilia;-15.79;-47.88
+Bandar Seri Begawan;4.89;114.94
+Sofia;42.70;23.32
+Ouagadougou;12.37;-1.52
+Gitega,Bujumbura;-3.43;29.92
+Praia;14.93;-23.51
+Phnom Penh;11.56;104.92
+Yaoundé,Yaounde;3.85;11.50
+Ottawa;45.42;-75.70
+Bangui;4.36;18.56
+N'Djamena,Ndjamena;12.13;15.06
+Santiago;-33.45;-70.67
+Pechino,Beijing;39.90;116.41
+Bogotà,Bogota;4.71;-74.07
+Moroni;-11.70;43.26
+Brazzaville;-4.27;15.28
+Kinshasa;-4.44;15.27
+San José,San Jose;9.93;-84.08
+Yamoussoukro,Abidjan;6.82;-5.28
+Zagabria,Zagreb;45.81;15.98
+L'Avana,Havana,La Habana;23.11;-82.37
+Nicosia;35.19;33.38
+Praga,Prague,Praha;50.08;14.44
+Copenaghen,Copenhagen,København;55.68;12.57
+Gibuti,Djibouti;11.59;43.15
+Roseau;15.30;-61.39
+Santo Domingo;18.49;-69.93
+Quito;-0.18;-78.47
+Il Cairo,Cairo;30.04;31.24
+San Salvador;13.69;-89.19
+Malabo;3.75;8.78
+Asmara;15.32;38.93
+Tallinn;59.44;24.75
+Mbabane,Lobamba;-26.31;31.14
+Addis Abeba,Addis Ababa;9.03;38.74
+Suva;-18.14;178.44
+Helsinki;60.17;24.94
+Parigi,Paris;48.86;2.35
+Libreville;0.39;9.45
+Banjul;13.45;-16.58
+Tbilisi;41.72;44.79
+Berlino,Berlin;52.52;13.40
+Accra;5.60;-0.19
+Atene,Athens,Athina;37.98;23.73
+Saint George's,St George's;12.05;-61.75
+Città del Guatemala,Guatemala City;14.63;-90.51
+Conakry;9.64;-13.58
+Bissau;11.86;-15.60
+Georgetown;6.80;-58.16
+Port-au-Prince;18.54;-72.34
+Tegucigalpa;14.07;-87.19
+Budapest;47.50;19.04
+Reykjavik,Reykjavík;64.15;-21.94
+Nuova Delhi,New Delhi,Delhi;28.61;77.21
+Giacarta,Jakarta;-6.21;106.85
+Teheran,Tehran;35.69;51.39
+Baghdad,Bagdad;33.31;44.36
+Dublino,Dublin;53.35;-6.26
+Gerusalemme,Jerusalem;31.77;35.22
+Roma,Rome;41.90;12.50
+Kingston;17.97;-76.79
+Tokyo;35.68;139.69
+Amman;31.95;35.93
+Astana;51.17;71.43
+Nairobi;-1.29;36.82
+Tarawa;1.45;173.03
+Pyongyang;39.04;125.76
+Seul,Seoul;37.57;126.98
+Kuwait City,Città del Kuwait,Al Kuwait;29.38;47.99
+Biškek,Bishkek;42.87;74.59
+Vientiane;17.97;102.60
+Riga;56.95;24.11
+Beirut;33.89;35.50
+Maseru;-29.31;27.48
+Monrovia;6.30;-10.80
+Tripoli;32.89;13.19
+Vaduz;47.14;9.52
+Vilnius;54.69;25.28
+Lussemburgo,Luxembourg;49.61;6.13
+Antananarivo;-18.88;47.51
+Lilongwe;-13.96;33.77
+Kuala Lumpur;3.14;101.69
+Malé,Male;4.18;73.51
+Bamako;12.64;-8.00
+La Valletta,Valletta;35.90;14.51
+Majuro;7.09;171.38
+Nouakchott;18.09;-15.98
+Port Louis;-20.16;57.50
+Città del Messico,Mexico City,Ciudad de Mexico;19.43;-99.13
+Palikir;6.92;158.16
+Chisinau,Chișinău;47.01;28.86
+Monaco;43.74;7.42
+Ulan Bator,Ulaanbaatar;47.89;106.91
+Podgorica;42.44;19.26
+Rabat;34.02;-6.84
+Maputo;-25.97;32.57
+Naypyidaw,Naypyitaw,Nay Pyi Taw;19.76;96.08
+Windhoek;-22.56;17.08
+Yaren;-0.55;166.92
+Kathmandu;27.72;85.32
+Amsterdam;52.37;4.90
+Wellington;-41.29;174.78
+Managua;12.14;-86.25
+Niamey;13.51;2.11
+Abuja;9.08;7.40
+Skopje;41.99;21.43
+Oslo;59.91;10.75
+Mascate,Muscat;23.59;58.41
+Islamabad;33.69;73.05
+Ngerulmud,Melekeok;7.50;134.62
+Panama City,Città di Panama,Panama;8.98;-79.52
+Port Moresby;-9.44;147.18
+Asunción,Asuncion;-25.26;-57.58
+Lima;-12.05;-77.04
+Manila;14.60;120.98
+Varsavia,Warsaw,Warszawa;52.23;21.01
+Lisbona,Lisbon,Lisboa;38.72;-9.14
+Doha;25.29;51.53
+Bucarest,Bucharest,București;44.43;26.10
+Mosca,Moscow;55.76;37.62
+Kigali;-1.95;30.06
+Basseterre;17.30;-62.72
+Castries;14.01;-60.99
+Kingstown;13.16;-61.22
+Apia;-13.83;-171.76
+San Marino;43.94;12.45
+São Tomé,Sao Tome;0.34;6.73
+Riyad,Riyadh;24.71;46.68
+Dakar;14.69;-17.45
+Belgrado,Belgrade,Beograd;44.79;20.45
+Victoria;-4.62;55.45
+Freetown;8.48;-13.23
+Singapore;1.35;103.82
+Bratislava;48.15;17.11
+Lubiana,Ljubljana;46.06;14.51
+Honiara;-9.43;159.95
+Mogadiscio,Mogadishu;2.05;45.32
+Pretoria,Città del Capo,Cape Town,Bloemfontein;-25.75;28.19
+Giuba,Juba;4.85;31.58
+Madrid;40.42;-3.70
+Sri Jayawardenepura Kotte,Kotte,Colombo;6.89;79.92
+Khartoum,Khartum;15.50;32.56
+Paramaribo;5.85;-55.20
+Stoccolma,Stockholm;59.33;18.07
+Berna,Bern;46.95;7.45
+Damasco,Damascus;33.51;36.28
+Dushanbe;38.56;68.77
+Dodoma;-6.16;35.75
+Bangkok;13.76;100.50
+Dili;-8.56;125.57
+Lomé,Lome;6.13;1.22
+Nuku'alofa;-21.14;-175.20
+Port of Spain;10.66;-61.51
+Tunisi,Tunis;36.81;10.18
+Ankara;39.93;32.86
+Ashgabat;37.96;58.33
+Funafuti;-8.52;179.20
+Kampala;0.35;32.58
+Kiev,Kyiv;50.45;30.52
+Abu Dhabi;24.45;54.38
+Londra,London;51.51;-0.13
+Washington,Washington DC;38.91;-77.04
+Montevideo;-34.90;-56.16
+Tashkent,Taškent;41.30;69.24
+Port Vila;-17.73;168.32
+Città del Vaticano,Vatican City,Vaticano;41.90;12.45
+Caracas;10.48;-66.90
+Hanoi;21.03;105.85
+Sana'a,Sanaa;15.37;44.19
+Lusaka;-15.39;28.32
+Harare;-17.83;31.05
+Ramallah;31.90;35.20
+Pristina,Priština;42.66;21.17
+Taipei;25.03;121.57`.split('\n').map(l=>{const p=l.split(';');return{n:p[0].split(',').map(norm),la:+p[1],lo:+p[2]}});
+function kindOf(o){
+  const c=o.category||o.class||'',ty=o.type||'',a=o.addresstype||'';
+  if(['country','state','region','county','state_district','province','continent'].includes(a))return 'other';
+  if(c==='natural'||c==='waterway'||c==='leisure'||c==='water'||['national_park','nature_reserve','protected_area','park','garden','wood','forest','beach','water','lake','peak','volcano','glacier','valley','bay','cape','reef','island','islet','mountain_range','massif','desert'].includes(ty))return 'nature';
+  if(['city','town','village','hamlet','municipality','suburb','borough','quarter','neighbourhood','city_district','locality'].includes(a)||(c==='place'&&['city','town','village','hamlet','suburb','municipality','borough','quarter','neighbourhood','locality'].includes(ty))||(c==='boundary'&&ty==='administrative'))return 'city';
+  return 'other';
+}
+function kindOfCustom(c){if(c.kind)return c.kind;const id=String(c.id||'');return id.indexOf('a:')===0?'area':id.indexOf('pk:')===0?'nature':'city'}
 function ccOf(c){if(c._cc===undefined){const b=bboxOf(c.geometry),f=countryAt((b[1]+b[3])/2,(b[0]+b[2])/2);c._cc=f?f.properties.ADMIN:null}return c._cc}
 function contOf(f){const c=f.properties.CONTINENT;if(c==='North America'||c==='South America')return 'America';return ['Europe','Asia','Africa','Oceania'].includes(c)?c:null}
 function worldStat(){
@@ -542,12 +760,33 @@ function worldStat(){
   const total=features.length||1;
   return{set,touched:set.size,total,pct:set.size/total*100,places:customs.length+visited.size,full:set.size===total};
 }
+function capitalsVisited(){
+  const geoms=[...features.filter(f=>visited.has(f.properties.ADMIN)).map(f=>f.geometry),...customs.map(c=>c.geometry)];
+  let n=0;
+  for(const cp of CAPS){
+    let ok=geoms.some(g=>inGeom(g,cp.la,cp.lo));
+    if(!ok)ok=customs.some(c=>{const b=bboxOf(c.geometry);return Math.abs((b[1]+b[3])/2-cp.la)<.25&&Math.abs((b[0]+b[2])/2-cp.lo)<.25&&cp.n.includes(norm(c.name))});
+    if(ok)n++;
+  }
+  return n;
+}
+function progress(){
+  const W=worldStat(),conts=new Set();
+  W.set.forEach(k=>{const f=adminMap.get(k),c=f&&contOf(f);if(c)conts.add(c)});
+  let cit=0,nat=0;customs.forEach(c=>{const k=kindOfCustom(c);if(k==='city')cit++;else if(k==='nature'||k==='area')nat++});
+  return{cont:conts.size,naz:W.touched,cap:capitalsVisited(),cit,nat};
+}
+function levelNow(pr){let k=0;for(let L=0;L<REQ.length;L++)if(REQ[L].every((m,i)=>pr[CATS[i][0]]>=m))k=L;return k}
+function fmtP(p){if(p<=0)return '0%';if(p<0.1)return '<0.1%';return (p>=99.95&&p<100?'99.9':p.toFixed(1))+'%'}
+let lastLvl=null;
 function stats(){
-  const W=worldStat(),i=levelIdx(W.pct,W.full);
+  const W=worldStat(),i=levelNow(progress());
   $('#sN').textContent=W.places;$('#sT').textContent=W.places===1?'luogo visitato':'luoghi visitati';
   $('#sP').style.width=Math.min(100,W.pct).toFixed(1)+'%';
   $('#sZ').textContent=`${W.touched} ${W.touched===1?'nazione toccata':'nazioni toccate'} · ${fmtP(W.pct)} del mondo`;
-  const ln=$('#lvlName');if(ln)ln.textContent='Liv '+(i+1)+' · '+LEVELS[i].n;
+  const ln=$('#lvlName');if(ln)ln.textContent='Liv '+(i+1)+' · '+LEVEL_NAMES[i];
+  if(lastLvl!==null&&i>lastLvl)setTimeout(()=>toast('Nuovo livello!\nLiv '+(i+1)+' · '+LEVEL_NAMES[i]),1800);
+  lastLvl=i;
 }
 function refresh(){save();updateLayers();stats()}
 
@@ -565,7 +804,7 @@ async function handleClick(lat,lng){
       for(let k=0;k<=36;k++){const a=k/36*2*Math.PI,ll=map.unproject([p.x+R*Math.cos(a),p.y+R*Math.sin(a)]);pts.push([ll.lng,ll.lat])}
       g={type:'Polygon',coordinates:[pts]}}catch(e){g=circle(lng,lat,1.5)}
     const c0=countryAt(lat,lng);
-    customs.push({id:'a:'+Date.now().toString(36),name:'Area'+(c0?' · '+itName(c0):''),geometry:g});
+    customs.push({id:'a:'+Date.now().toString(36),name:'Area'+(c0?' · '+itName(c0):''),kind:'area',geometry:g});
     refresh();toast('Area aggiunta ✓'+hint());return}
   if(lv[0]==='Luogo'){
     // se tocchi una cima con il nome: area di circa 3 km attorno alla vetta
@@ -579,10 +818,12 @@ async function handleClick(lat,lng){
           const c=best.geometry.coordinates,pr=best.properties||{},name=pr['name:it']||pr.name||'Cima';
           const id='pk:'+name+':'+c[0].toFixed(3)+','+c[1].toFixed(3);
           if(customs.some(x=>x.id===id)){toast(name+' è già attiva\nTieni premuto per le opzioni');return}
-          busy=true;toast('Cerco i confini di '+name+'…');
-          let g=null;try{g=await peakPolygon(name,c[0],c[1])}catch(e){}
-          customs.push({id,name,geometry:g||circle(c[0],c[1],.03)});refresh();
-          toast(name+' aggiunto ✓'+(g?'':'\nConfini non trovati: area di circa 3 km')+hint());
+          busy=true;toast('Disegno la forma di '+name+'…');
+          let g=null;
+          try{g=await peakPolygon(name,c[0],c[1])}catch(e){}
+          if(!g){try{g=await peakFootprint(c[0],c[1])}catch(e){}}
+          customs.push({id,name,kind:'nature',geometry:g||circle(c[0],c[1],.006)});refresh();
+          toast(name+' aggiunto ✓'+(g?'':'\nForma non disponibile: area di circa 700 m')+hint());
           setTimeout(()=>{busy=false},600);return}
       }
     }catch(e){}
@@ -604,7 +845,7 @@ async function handleClick(lat,lng){
     const name=j.name||(j.display_name||'').split(',')[0]||'Luogo';
     const i=customs.findIndex(c=>c.id===id);
     if(i>=0){toast(name+' è già attivo\nTieni premuto per le opzioni');return}
-    customs.push({id,name,geometry:g});refresh();toast(name+' aggiunto ✓'+hint());
+    customs.push({id,name,kind:lv[0]==='Comune'?'city':kindOf(j),geometry:g});refresh();toast(name+' aggiunto ✓'+hint());
   }catch(e){toast('Non riesco a contattare il servizio mappe')}
   finally{setTimeout(()=>{busy=false},900)}
 }
@@ -720,7 +961,7 @@ function initMap(){
   map.on('error',e=>{lastErr=(e&&e.error&&e.error.message)||lastErr});
   map.on('load',()=>{ready=true;try{map.setProjection({type:'globe'})}catch(e){}
     try{map.setSky({'sky-color':'#1b1060','horizon-color':'#8b5cf6','fog-color':'#2a0a5e','sky-horizon-blend':.6,'horizon-fog-blend':.6,'fog-ground-blend':.3,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,5,1,7,0]})}catch(e){}
-    updateLayers();stats();$('#loading').hidden=true;toast('Zooma: appaiono confini e nomi. Tocca per colorare')});
+    updateLayers();stats();$('#loading').hidden=true;toast('Zooma: appaiono confini e nomi. Tocca per colorare');setTimeout(()=>{barFade();nudgeBar()},900)});
   let lpT=null,lpP=null,lpFired=false,noClickUntil=0;
   const lpBegin=e=>{if(!ready)return;const oe=e.originalEvent;if(oe&&oe.touches&&oe.touches.length>1)return;
     lpFired=false;lpP=e.point;clearTimeout(lpT);
@@ -781,8 +1022,8 @@ async function geocode(q){
   const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&polygon_geojson=1&polygon_threshold=0.0005&accept-language=it&q='+encodeURIComponent(q));
   const j=await r.json();if(!j[0])return null;
   let g=j[0].geojson;
-  if(!g||(g.type!=='Polygon'&&g.type!=='MultiPolygon'))g=circle(+j[0].lon,+j[0].lat,j[0].category==='place'?.03:.15);
-  return{id:(j[0].osm_type||'x')+(j[0].osm_id||j[0].place_id),name:(j[0].display_name||q).split(',')[0],geometry:g};
+  if(!g||(g.type!=='Polygon'&&g.type!=='MultiPolygon'))g=circle(+j[0].lon,+j[0].lat,j[0].category==='place'?.03:(j[0].type==='peak'||j[0].type==='volcano'?.008:.15));
+  return{id:(j[0].osm_type||'x')+(j[0].osm_id||j[0].place_id),name:(j[0].display_name||q).split(',')[0],kind:kindOf(j[0]),geometry:g};
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function pickPhoto(){return new Promise(res=>{
@@ -963,11 +1204,33 @@ addEventListener('resize',()=>{if(!$s('stats').hidden)renderStats()});
 /* ---------- livelli (elenco) ---------- */
 $('#lvlbtn').onclick=e=>{
   e.stopPropagation();
-  const W=worldStat(),i=levelIdx(W.pct,W.full),logo=document.querySelector('.brand img').src;
-  const rows=LEVELS.map((L,k)=>`<div class="lvrow${k===i?' on':''}"><span class="n">${k+1}</span><img src="${logo}" alt=""><span class="t"><b>${esc(L.n)}</b><small>${L.r}</small></span></div>`).join('');
-  const m=modal(`<div class="box"><h2>Il tuo livello</h2><div class="sub">Hai visto il ${fmtP(W.pct)} del mondo (${W.touched}/${W.total} nazioni toccate).</div><div class="body">${rows}</div><div class="foot"><button class="btn" id="x">Chiudi</button></div></div>`);
+  const i=levelNow(progress()),logo=document.querySelector('.brand img').src;
+  const rows=LEVEL_NAMES.map((n,k)=>`<div class="lvrow c${k===i?' on':''}"><span class="n">${k+1}</span><img src="${logo}" alt=""><b>${esc(n)}</b></div>`).join('');
+  const m=modal(`<div class="box"><h2>I livelli</h2><div class="sub">Sei al livello ${i+1}.</div><div class="body">${rows}</div><div class="foot"><button class="btn" id="x">Chiudi</button><button class="btn p" id="inf">Info livelli</button></div></div>`);
   m.querySelector('#x').onclick=closeModal;
+  m.querySelector('#inf').onclick=openLevelInfo;
 };
+function openLevelInfo(){
+  const pr=progress(),i=levelNow(pr),nx=i<7?i+1:null;
+  let top;
+  if(nx!==null){
+    const req=REQ[nx];
+    top=`<h4>Per il livello ${nx+1} · ${esc(LEVEL_NAMES[nx])}</h4>`+CATS.map(([k,lab],ci)=>{
+      const have=pr[k],need=req[ci],ok=have>=need,w=need?Math.min(100,have/need*100):100;
+      return `<div class="goal${ok?' ok':''}"><span>${lab}</span><i><u style="width:${w.toFixed(0)}%"></u></i><b>${have}/${need}</b></div>`}).join('')
+      +`<p class="small">Per salire devi raggiungere tutte e cinque le cifre.</p>`;
+  }else top='<h4>Livello massimo</h4><p>Sei un Platinatore: hai completato tutti gli obiettivi.</p>';
+  const head='<tr><th>Liv</th><th>Cont.</th><th>Naz.</th><th>Cap.</th><th>Città</th><th>Nat.</th></tr>';
+  const body=REQ.map((r,k)=>`<tr class="${k===i?'on':''}"><td>${k+1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}${k===7?'+':''}</td><td>${r[4]}${k===7?'+':''}</td></tr>`).join('');
+  const m=modal(`<div class="box"><h2>Info livelli</h2><div class="body hlp">
+    ${top}
+    <h4>Cosa conta</h4>
+    <p><b>Continenti</b>: i continenti dove hai almeno un luogo. <b>Nazioni</b>: le nazioni dove hai almeno un luogo. <b>Capitali</b>: le capitali di cui hai attivato il comune o il luogo. <b>Città</b>: i comuni attivati. <b>Natura</b>: laghi, parchi, cime e aree libere.</p>
+    <h4>Cifre minime per ogni livello</h4>
+    <table class="rtab">${head}${body}</table>
+  </div><div class="foot"><button class="btn p" id="x">Chiudi</button></div></div>`);
+  m.querySelector('#x').onclick=closeModal;
+}
 
 /* ---------- solo mappa: nascondi / mostra il menu ---------- */
 const EYE_ON='M12 4.5C7 4.5 2.7 7.6 1 12c1.7 4.4 6 7.5 11 7.5s9.3-3.1 11-7.5c-1.7-4.4-6-7.5-11-7.5zM12 17a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z';
@@ -980,25 +1243,162 @@ $('#eye').onclick=()=>{
   toast(on?'Menu nascosto\nTocca l\'occhio per rimetterlo':'Menu mostrato');
 };
 
+/* ---------- barra a scorrimento: sfumatura e piccolo movimento ---------- */
+function barFade(){const el=document.querySelector('.bar .scroll');if(!el)return;el.classList.toggle('fade',el.scrollLeft+el.clientWidth<el.scrollWidth-6)}
+function nudgeBar(){
+  const el=document.querySelector('.bar .scroll');if(!el||el.scrollWidth<=el.clientWidth+4)return;
+  const t0=performance.now(),A=18,D=950;
+  (function f(t){const k=Math.min(1,(t-t0)/D);el.scrollLeft=Math.sin(k*Math.PI)*A;if(k<1)requestAnimationFrame(f);else{el.scrollLeft=0;barFade()}})(t0);
+}
+document.querySelector('.bar .scroll').addEventListener('scroll',barFade,{passive:true});
+addEventListener('resize',barFade);
+
+/* ---------- backup e ripristino ---------- */
+async function collectPhotos(){const out={};let ks=[];try{ks=await photoStore.keys()}catch(e){}
+  for(const k of ks){try{const v=await photoStore.get(k);if(v)out[k]=v}catch(e){}}return out}
+async function restoreBackup(d){
+  if(!d||d.app!=='doomerworld')throw new Error('formato');
+  let nv=0,nc=0,np=0;
+  (d.visited||[]).forEach(k=>{if(adminMap.has(k)&&!visited.has(k)){visited.add(k);nv++}});
+  (d.customs||[]).forEach(c=>{if(c&&c.id&&c.geometry&&polysOf(c.geometry).length&&!customs.some(x=>x.id===c.id)){customs.push({id:c.id,name:c.name||'Luogo',kind:c.kind,geometry:c.geometry});nc++}});
+  for(const [k,v] of Object.entries(d.photos||{})){if(typeof v==='string'&&v.indexOf('data:image')===0){try{await photoStore.set(k,v);photoKeys.add(k);np++}catch(e){}}}
+  refresh();toast(`Ripristinati ${nv+nc} luoghi e ${np} foto`);
+}
+$('#bBackup').onclick=async()=>{
+  const photos=await collectPhotos();
+  const m=modal(`<div class="box"><h2>Backup</h2><div class="sub">Salva una copia di luoghi e foto in un file: così non li perdi se cambi telefono o cancelli i dati del browser.</div>
+    <div class="body"><div class="nophoto">${customs.length+visited.size} luoghi · ${Object.keys(photos).length} foto</div>
+    <div class="pm"><button class="pbtn y" id="bkSave">Salva copia</button><button class="pbtn" id="bkLoad">Ripristina da file</button></div></div>
+    <div class="foot"><button class="btn" id="x">Chiudi</button></div></div>`);
+  m.querySelector('#x').onclick=closeModal;
+  m.querySelector('#bkSave').onclick=async()=>{
+    const data={app:'doomerworld',v:1,date:new Date().toISOString(),visited:[...visited],
+      customs:customs.map(c=>({id:c.id,name:c.name,kind:kindOfCustom(c),geometry:c.geometry})),photos:await collectPhotos()};
+    const d=new Date(),pad=n=>String(n).padStart(2,'0'),name=`doomerworld-backup-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}.json`;
+    const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+    try{
+      const file=new File([blob],name,{type:'application/json'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Doomerworld backup'});toast('Backup pronto');return}
+    }catch(e){if(e&&e.name==='AbortError')return}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);toast('Backup salvato');
+  };
+  m.querySelector('#bkLoad').onclick=()=>{
+    const inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';inp.style.display='none';document.body.appendChild(inp);
+    inp.onchange=async()=>{const f=inp.files&&inp.files[0];inp.remove();if(!f)return;
+      try{const d=JSON.parse(await f.text());await restoreBackup(d);closeModal()}catch(e){toast('File non valido')}};
+    inp.click();
+  };
+};
+
 /* ---------- istruzioni ---------- */
 $('#bHelp').onclick=()=>{
   const m=modal(`<div class="box"><h2>Istruzioni</h2><div class="body hlp">
     <h4>Attivare un luogo</h4><p>Scegli il <b>Tocco</b> in alto e tocca la mappa: il luogo si colora e resta attivo. Un semplice tocco non lo toglie mai.</p>
-    <h4>I tre tocchi</h4><p><b>Comune</b>: tocchi un comune o una città. <b>Luogo</b>: un lago, un parco, un monumento o una cima (tocca il puntino giallo col nome). <b>Area</b>: un cerchio libero per deserti e montagne senza confini; più zoomi indietro, più è grande.</p>
+    <h4>I tre tocchi</h4><p><b>Comune</b>: tocchi un comune o una città. <b>Luogo</b>: un lago, un parco, un monumento o una cima (per una cima tocca il puntino giallo col nome: l'app prova a disegnare la forma del monte). <b>Area</b>: un cerchio libero per deserti e montagne senza confini; più zoomi indietro, più è grande.</p>
     <h4>Foto, vedere, disattivare</h4><p>Tieni premuto circa mezzo secondo su un luogo già attivo: si apre il menu.</p>
     <p><b>Allega foto</b>: apre la libreria o la fotocamera (una foto per luogo).</p>
     <p><b>Vedere la foto</b>: se ce n'è già una, la vedi nel menu, con <b>Elimina foto</b> per toglierla.</p>
     <p><b>Disattiva</b>: toglie il luogo dalla mappa.</p>
     <h4>Aggiungere da una lista</h4><p><b>Aggiungi</b>: scrivi i posti uno per riga (invio per andare a capo), allega la foto di ognuno con la graffetta e premi OK una volta sola.</p>
     <h4>Esplorare</h4><p><b>Esplora</b> apre la mappa piatta di un continente o di una nazione. <b>Mondo</b> riporta al globo.</p>
-    <h4>Statistiche e livelli</h4><p>Tocca il contatore in basso per vedere le percentuali di Mondo, Continenti e Nazioni. Il livello dipende dalle nazioni toccate: toccalo nel contatore per vedere tutti e otto.</p>
+    <h4>Statistiche e livelli</h4><p>Tocca il contatore in basso per vedere le percentuali di Mondo, Continenti e Nazioni. Il livello dipende da cinque obiettivi: continenti, nazioni, capitali, città e natura. Tocca il livello nel contatore per vedere i livelli e <b>Info livelli</b> per sapere come salire.</p>
     <h4>Solo la mappa</h4><p>L'<b>occhio</b> in alto a destra nasconde tutto il menu per vedere bene la mappa. Toccalo di nuovo per rimetterlo.</p>
+    <h4>Backup</h4><p><b>Backup</b> salva in un file tutti i luoghi e le foto, e li ripristina quando serve: usalo ogni tanto e prima di cambiare telefono o cancellare i dati del browser.</p>
     <h4>Altro</h4><p>Il logo riporta alla pagina iniziale. Luoghi e foto restano sul tuo telefono: usa sempre una scheda normale del browser, oppure sempre l'icona sulla Home, perché hanno memorie separate.</p>
   </div><div class="foot"><button class="btn p" id="x">Chiudi</button></div></div>`);
   m.querySelector('#x').onclick=closeModal;
 };
 
-/* ---------- confini reali di una cima ---------- */
+/* ---------- forma di una cima dai dati di altitudine ---------- */
+const DEMZ=13;
+function tileXY(lng,lat,z){const n=Math.pow(2,z),s=Math.sin(lat*Math.PI/180);return[(lng+180)/360*n,(0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n]}
+function pixLL(gx,gy,z){const n=256*Math.pow(2,z);return[gx/n*360-180,Math.atan(Math.sinh(Math.PI*(1-2*gy/n)))*180/Math.PI]}
+function loadDemTile(z,x,y){return new Promise((res,rej)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>res(im);im.onerror=()=>rej(new Error('terreno'));
+  im.src=`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`})}
+function chaikin(p,n){for(let k=0;k<n;k++){const q=[];for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];q.push([a[0]*.75+b[0]*.25,a[1]*.75+b[1]*.25],[a[0]*.25+b[0]*.75,a[1]*.25+b[1]*.75])}p=q}return p}
+function dpLine(pts,eps){
+  if(pts.length<4)return pts;const keep=new Uint8Array(pts.length);keep[0]=keep[pts.length-1]=1;const st=[[0,pts.length-1]];
+  while(st.length){const[a,b]=st.pop(),A=pts[a],B=pts[b],dx=B[0]-A[0],dy=B[1]-A[1],L=Math.hypot(dx,dy)||1;let md=0,mi=-1;
+    for(let i=a+1;i<b;i++){const d=Math.abs(dy*(pts[i][0]-A[0])-dx*(pts[i][1]-A[1]))/L;if(d>md){md=d;mi=i}}
+    if(md>eps&&mi>0){keep[mi]=1;st.push([a,mi],[mi,b])}}
+  return pts.filter((_,i)=>keep[i]);
+}
+function traceOutline(mask,W,H){
+  const ins=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&mask[y*W+x]===1;
+  let sx=-1,sy=-1;
+  outer:for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(mask[y*W+x]){sx=x;sy=y;break outer}
+  if(sx<0)return null;
+  const DX=[1,0,-1,0],DY=[0,1,0,-1],pts=[];
+  let vx=sx,vy=sy,d=0,guard=0;
+  for(;;){
+    // pixel davanti a sinistra e a destra rispetto alla direzione d (0=est,1=sud,2=ovest,3=nord)
+    let fl,fr;
+    if(d===0){fl=ins(vx,vy-1);fr=ins(vx,vy)}
+    else if(d===1){fl=ins(vx,vy);fr=ins(vx-1,vy)}
+    else if(d===2){fl=ins(vx-1,vy);fr=ins(vx-1,vy-1)}
+    else{fl=ins(vx-1,vy-1);fr=ins(vx,vy-1)}
+    const nd=fl?(d+3)%4:fr?d:(d+1)%4;
+    if(nd!==d||pts.length===0)pts.push([vx,vy]);
+    d=nd;vx+=DX[d];vy+=DY[d];guard++;
+    if((vx===sx&&vy===sy)||guard>200000)break;
+  }
+  if(guard>200000)return null;
+  return pts;
+}
+async function peakFootprint(lng,lat){
+  const z=DEMZ,N=Math.pow(2,z),[tx,ty]=tileXY(lng,lat,z),x0=Math.floor(tx)-1,y0=Math.floor(ty)-1,S=768;
+  const cv=document.createElement('canvas');cv.width=S;cv.height=S;
+  const c=cv.getContext('2d',{willReadFrequently:true});
+  const jobs=[];
+  for(let a=0;a<3;a++)for(let b=0;b<3;b++){const X=Math.min(N-1,Math.max(0,x0+b)),Y=Math.min(N-1,Math.max(0,y0+a));jobs.push(loadDemTile(z,X,Y).then(im=>c.drawImage(im,b*256,a*256)))}
+  await tmo(Promise.all(jobs),20000,'terreno');
+  const d=c.getImageData(0,0,S,S).data,E=new Float32Array(S*S);
+  for(let i=0;i<S*S;i++)E[i]=d[i*4]*256+d[i*4+1]+d[i*4+2]/256-32768;
+  const mpp=156543.03392*Math.cos(lat*Math.PI/180)/Math.pow(2,z);
+  const cx=Math.round((tx-x0)*256),cy=Math.round((ty-y0)*256);
+  // la cima vera = punto più alto vicino a quello indicato
+  const r0=Math.max(3,Math.ceil(250/mpp));let s=cy*S+cx,H0=E[s];
+  for(let y=cy-r0;y<=cy+r0;y++)for(let x=cx-r0;x<=cx+r0;x++){if(x<0||y<0||x>=S||y>=S)continue;const k=y*S+x;if(E[k]>H0){H0=E[k];s=k}}
+  const sx=s%S,sy=(s/S)|0,H=H0;
+  // dislivello locale entro circa 2 km
+  const r2=Math.ceil(2000/mpp);let Emin=H;
+  for(let y=Math.max(0,sy-r2);y<=Math.min(S-1,sy+r2);y++)for(let x=Math.max(0,sx-r2);x<=Math.min(S-1,sx+r2);x++){const v=E[y*S+x];if(v<Emin)Emin=v}
+  const rel=H-Emin,dMax=Math.min(400,Math.max(40,rel*.4)),tol=Math.max(5,Math.min(14,rel*.01));
+  const R=Math.round(2600/mpp),maxPix=Math.round(14e6/(mpp*mpp));
+  // si scende dalla vetta dal punto più alto al più basso, finché non si incontra un altro rilievo
+  const hk=[],hi=[];
+  const push=(k,i)=>{let n=hk.length;hk.push(k);hi.push(i);while(n>0){const p=(n-1)>>1;if(hk[p]>=k)break;hk[n]=hk[p];hi[n]=hi[p];n=p}hk[n]=k;hi[n]=i};
+  const pop=()=>{const k=hk[0],i=hi[0],lk=hk.pop(),li=hi.pop(),L=hk.length;if(L){let n=0;for(;;){let c=2*n+1;if(c>=L)break;if(c+1<L&&hk[c+1]>hk[c])c++;if(hk[c]<=lk)break;hk[n]=hk[c];hi[n]=hi[c];n=c}hk[n]=lk;hi[n]=li}return[k,i]};
+  const seen=new Uint8Array(S*S),mask=new Uint8Array(S*S);
+  let count=0,minPop=H;push(H,s);seen[s]=1;
+  while(hk.length){
+    const[k,i]=pop();
+    if(k<H-dMax)break;
+    if(count>20&&k>minPop+tol)break;
+    mask[i]=1;count++;if(k<minPop)minPop=k;
+    if(count>=maxPix)break;
+    const x=i%S,y=(i/S)|0;
+    for(let q=0;q<4;q++){
+      const nx=x+(q===0?1:q===1?-1:0),ny=y+(q===2?1:q===3?-1:0);
+      if(nx<0||ny<0||nx>=S||ny>=S)continue;
+      const ni=ny*S+nx;if(seen[ni])continue;seen[ni]=1;
+      if(Math.hypot(nx-sx,ny-sy)>R)continue;
+      push(E[ni],ni);
+    }
+  }
+  if(count<8)return null;
+  const ring=traceOutline(mask,S,S);if(!ring||ring.length<4)return null;
+  let pts=chaikin(ring,2);
+  {let m=0,md=-1;for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[0][0],pts[i][1]-pts[0][1]);if(d>md){md=d;m=i}}
+   const h1=dpLine(pts.slice(0,m+1),.7),h2=dpLine(pts.slice(m).concat([pts[0]]),.7);
+   pts=h1.slice(0,-1).concat(h2.slice(0,-1))}
+  if(pts.length<4)return null;
+  const ll=pts.map(p=>pixLL(x0*256+p[0],y0*256+p[1],z));ll.push(ll[0]);
+  return{type:'Polygon',coordinates:[ll]};
+}
+
+/* ---------- confini reali di una cima (se OpenStreetMap ha un'area piccola) ---------- */
 async function peakPolygon(name,lng,lat){
   const d=.3,vb=`${lng-d},${lat+d},${lng+d},${lat-d}`;
   const r=await tmo(fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&polygon_geojson=1&polygon_threshold=0.0005&accept-language=it&viewbox=${vb}&bounded=1&q=${encodeURIComponent(name)}`),12000,'confini');
@@ -1007,7 +1407,7 @@ async function peakPolygon(name,lng,lat){
     const g=x.geojson;if(!g||(g.type!=='Polygon'&&g.type!=='MultiPolygon'))continue;
     const nm=norm(x.name||(x.display_name||'').split(',')[0]);
     if(!(nm===k||nm.includes(k)||k.includes(nm)))continue;
-    const a=geoArea(g);if(a<0.3||a>3000)continue;
+    const a=geoArea(g);if(a<0.3||a>20)continue;
     const b=bboxOf(g);if(lng<b[0]-.05||lng>b[2]+.05||lat<b[1]-.05||lat>b[3]+.05)continue;
     return g;
   }
